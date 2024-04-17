@@ -37,6 +37,7 @@ PGO_TESTS = [
     'test_ordered_dict',
     'test_patma',
     'test_pickle',
+    'test_pipe',
     'test_pprint',
     'test_re',
     'test_set',
