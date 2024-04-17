@@ -363,4 +363,9 @@ expr_ty _PyPegen_joined_str(Parser *p, Token* a, asdl_expr_seq* expr, Token*b);
 // Generated function in parse.c - function definition in python.gram
 void *_PyPegen_parse(Parser *);
 
+expr_ty
+_PyPegen_pipe(Parser *p, expr_ty a, expr_ty b, int lineno, int col_offset,
+        int end_lineno, int end_col_offset, PyArena *arena);
+
+
 #endif
