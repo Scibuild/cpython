@@ -672,8 +672,8 @@ expressions[expr_ty]:
 expression[expr_ty] (memo):
     | invalid_expression
     | invalid_legacy_expression
-    | a=pipe 'if' b=pipe 'else' c=expression { _PyAST_IfExp(b, a, c, EXTRA) }
-    | pipe
+    | a=disjunction 'if' b=disjunction 'else' c=expression { _PyAST_IfExp(b, a, c, EXTRA) }
+    | disjunction
     | lambdef
 
 yield_expr[expr_ty]:
@@ -705,10 +705,6 @@ named_expression[expr_ty]:
     | assignment_expression
     | invalid_named_expression
     | expression !':='
-
-pipe[expr_ty]:
-    | a=pipe '|>' b=primary { _PyPegen_pipe(p, a, b, EXTRA) }
-    | disjunction
 
 disjunction[expr_ty] (memo):
     | a=conjunction b=('or' c=conjunction { c })+ { _PyAST_BoolOp(
@@ -764,6 +760,8 @@ in_bitwise_or[CmpopExprPair*]: 'in' a=bitwise_or { _PyPegen_cmpop_expr_pair(p, I
 isnot_bitwise_or[CmpopExprPair*]: 'is' 'not' a=bitwise_or { _PyPegen_cmpop_expr_pair(p, IsNot, a) }
 is_bitwise_or[CmpopExprPair*]: 'is' a=bitwise_or { _PyPegen_cmpop_expr_pair(p, Is, a) }
 
+
+
 # Bitwise operators
 # -----------------
 
@@ -776,7 +774,11 @@ bitwise_xor[expr_ty]:
     | bitwise_and
 
 bitwise_and[expr_ty]:
-    | a=bitwise_and '&' b=shift_expr { _PyAST_BinOp(a, BitAnd, b, EXTRA) }
+    | a=bitwise_and '&' b=pipe { _PyAST_BinOp(a, BitAnd, b, EXTRA) }
+    | pipe
+
+pipe[expr_ty]:
+    | a=pipe '|>' b=shift_expr { _PyPegen_pipe(p, a, b, EXTRA) }
     | shift_expr
 
 shift_expr[expr_ty]:
@@ -970,9 +972,9 @@ for_if_clauses[asdl_comprehension_seq*]:
     | a[asdl_comprehension_seq*]=for_if_clause+ { a }
 
 for_if_clause[comprehension_ty]:
-    | 'async' 'for' a=star_targets 'in' ~ b=pipe c[asdl_expr_seq*]=('if' z=pipe { z })* {
+    | 'async' 'for' a=star_targets 'in' ~ b=disjunction c[asdl_expr_seq*]=('if' z=disjunction { z })* {
         CHECK_VERSION(comprehension_ty, 6, "Async comprehensions are", _PyAST_comprehension(a, b, c, 1, p->arena)) }
-    | 'for' a=star_targets 'in' ~ b=pipe c[asdl_expr_seq*]=('if' z=pipe { z })* {
+    | 'for' a=star_targets 'in' ~ b=disjunction c[asdl_expr_seq*]=('if' z=disjunction { z })* {
         _PyAST_comprehension(a, b, c, 0, p->arena) }
     | 'async'? 'for' (bitwise_or (',' bitwise_or)* [',']) !'in' {
         RAISE_SYNTAX_ERROR("'in' expected after for-loop variables") }
@@ -1163,8 +1165,8 @@ invalid_kwarg:
 
 # IMPORTANT: Note that the "_without_invalid" suffix causes the rule to not call invalid rules under it
 expression_without_invalid[expr_ty]:
-    | a=pipe 'if' b=pipe 'else' c=expression { _PyAST_IfExp(b, a, c, EXTRA) }
-    | pipe
+    | a=disjunction 'if' b=disjunction 'else' c=expression { _PyAST_IfExp(b, a, c, EXTRA) }
+    | disjunction
     | lambdef
 invalid_legacy_expression:
     | a=NAME !'(' b=star_expressions {
@@ -1174,10 +1176,10 @@ invalid_legacy_expression:
 invalid_expression:
     # !(NAME STRING) is not matched so we don't show this error with some invalid string prefixes like: kf"dsfsdf"
     # Soft keywords need to also be ignored because they can be parsed as NAME NAME
-   | !(NAME STRING | SOFT_KEYWORD) a=pipe b=expression_without_invalid {
+   | !(NAME STRING | SOFT_KEYWORD) a=disjunction b=expression_without_invalid {
         _PyPegen_check_legacy_stmt(p, a) ? NULL : p->tokens[p->mark-1]->level == 0 ? NULL :
         RAISE_SYNTAX_ERROR_KNOWN_RANGE(a, b, "invalid syntax. Perhaps you forgot a comma?") }
-   | a=pipe 'if' b=pipe !('else'|':') { RAISE_SYNTAX_ERROR_KNOWN_RANGE(a, b, "expected 'else' after 'if' expression") }
+   | a=disjunction 'if' b=disjunction !('else'|':') { RAISE_SYNTAX_ERROR_KNOWN_RANGE(a, b, "expected 'else' after 'if' expression") }
    | a='lambda' [lambda_params] b=':' &FSTRING_MIDDLE  {
         RAISE_SYNTAX_ERROR_KNOWN_RANGE(a, b, "f-string: lambda expressions are not allowed without parentheses") }
 

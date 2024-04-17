@@ -1670,7 +1670,8 @@ _PyPegen_pipe(Parser *p, expr_ty a, expr_ty b, int lineno, int col_offset,
     }
 
     return _PyAST_Call(b->v.Call.func,
-                    CHECK(asdl_expr_seq*, _PyPegen_seq_insert_in_front(p, a, ((expr_ty) b)->v.Call.args)),
+                    CHECK(asdl_expr_seq*,
+                        _PyPegen_seq_append_to_end(p, (asdl_seq *)((expr_ty) b)->v.Call.args, a)),
                     ((expr_ty) b)->v.Call.keywords,
                     lineno,
                     col_offset,
