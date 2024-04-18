@@ -1,4 +1,4 @@
-This is Python version 3.13.0 alpha 6 (Scibuild edition, aka it has pipes)
+This is Python version 3.13.0 alpha 6 (Scibuild edition, aka it has pipes, aka Pypethon)
 =====================================
 
 .. image:: https://github.com/python/cpython/workflows/Tests/badge.svg
