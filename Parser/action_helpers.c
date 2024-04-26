@@ -1287,3 +1287,21 @@ _PyPegen_nonparen_genexp_in_call(Parser *p, expr_ty args, asdl_comprehension_seq
         "Generator expression must be parenthesized"
     );
 }
+
+expr_ty
+_PyPegen_pipe(Parser *p, expr_ty a, expr_ty b, int lineno, int col_offset,
+        int end_lineno, int end_col_offset, PyArena *arena) {
+    if (b->kind != Call_kind) {
+        return RAISE_SYNTAX_ERROR_KNOWN_LOCATION(b, "Pipe '|>' must be followed by function call");
+    }
+
+    return _PyAST_Call(b->v.Call.func,
+                    CHECK(asdl_expr_seq*,
+                        _PyPegen_seq_append_to_end(p, (asdl_seq *)((expr_ty) b)->v.Call.args, a)),
+                    ((expr_ty) b)->v.Call.keywords,
+                    lineno,
+                    col_offset,
+                    end_lineno,
+                    end_col_offset,
+                    arena);
+}

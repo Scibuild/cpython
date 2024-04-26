@@ -737,7 +737,11 @@ bitwise_xor[expr_ty]:
     | bitwise_and
 
 bitwise_and[expr_ty]:
-    | a=bitwise_and '&' b=shift_expr { _PyAST_BinOp(a, BitAnd, b, EXTRA) }
+    | a=bitwise_and '&' b=pipe { _PyAST_BinOp(a, BitAnd, b, EXTRA) }
+    | pipe
+
+pipe[expr_ty]:
+    | a=pipe '|>' b=shift_expr { _PyPegen_pipe(p, a, b, EXTRA) }
     | shift_expr
 
 shift_expr[expr_ty]:

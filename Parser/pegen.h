@@ -341,4 +341,10 @@ asdl_stmt_seq *_PyPegen_interactive_exit(Parser *);
 // Generated function in parse.c - function definition in python.gram
 void *_PyPegen_parse(Parser *);
 
+expr_ty
+_PyPegen_pipe(Parser *p, expr_ty a, expr_ty b, int lineno, int col_offset,
+        int end_lineno, int end_col_offset, PyArena *arena);
+
+
+
 #endif
