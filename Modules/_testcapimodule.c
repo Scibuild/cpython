@@ -819,25 +819,55 @@ static int _pending_callback(void *arg)
  * run from any python thread.
  */
 static PyObject *
-pending_threadfunc(PyObject *self, PyObject *arg)
+pending_threadfunc(PyObject *self, PyObject *arg, PyObject *kwargs)
 {
+    static char *kwlist[] = {"callback", "num",
+                             "blocking", "ensure_added", NULL};
     PyObject *callable;
-    int r;
-    if (PyArg_ParseTuple(arg, "O", &callable) == 0)
+    unsigned int num = 1;
+    int blocking = 0;
+    int ensure_added = 0;
+    if (!PyArg_ParseTupleAndKeywords(arg, kwargs,
+                                     "O|I$pp:_pending_threadfunc", kwlist,
+                                     &callable, &num, &blocking, &ensure_added))
+    {
         return NULL;
+    }
 
     /* create the reference for the callbackwhile we hold the lock */
-    Py_INCREF(callable);
-
-    Py_BEGIN_ALLOW_THREADS
-    r = Py_AddPendingCall(&_pending_callback, callable);
-    Py_END_ALLOW_THREADS
-
-    if (r<0) {
-        Py_DECREF(callable); /* unsuccessful add, destroy the extra reference */
-        Py_RETURN_FALSE;
+    for (unsigned int i = 0; i < num; i++) {
+        Py_INCREF(callable);
     }
-    Py_RETURN_TRUE;
+
+    PyThreadState *save_tstate = NULL;
+    if (!blocking) {
+        save_tstate = PyEval_SaveThread();
+    }
+
+    unsigned int num_added = 0;
+    for (; num_added < num; num_added++) {
+        if (ensure_added) {
+            int r;
+            do {
+                r = Py_AddPendingCall(&_pending_callback, callable);
+            } while (r < 0);
+        }
+        else {
+            if (Py_AddPendingCall(&_pending_callback, callable) < 0) {
+                break;
+            }
+        }
+    }
+
+    if (!blocking) {
+        PyEval_RestoreThread(save_tstate);
+    }
+
+    for (unsigned int i = num_added; i < num; i++) {
+        Py_DECREF(callable); /* unsuccessful add, destroy the extra reference */
+    }
+    /* The callable is decref'ed above in each added _pending_callback(). */
+    return PyLong_FromUnsignedLong((unsigned long)num_added);
 }
 
 /* Test PyOS_string_to_double. */
@@ -3232,7 +3262,8 @@ static PyMethodDef TestMethods[] = {
     {"_spawn_pthread_waiter",   spawn_pthread_waiter,            METH_NOARGS},
     {"_end_spawned_pthread",    end_spawned_pthread,             METH_NOARGS},
 #endif
-    {"_pending_threadfunc",     pending_threadfunc,              METH_VARARGS},
+    {"_pending_threadfunc",     _PyCFunction_CAST(pending_threadfunc),
+     METH_VARARGS|METH_KEYWORDS},
 #ifdef HAVE_GETTIMEOFDAY
     {"profile_int",             profile_int,                     METH_NOARGS},
 #endif
@@ -3904,6 +3935,16 @@ PyInit__testcapi(void)
     PyModule_AddIntConstant(m, "the_number_three", 3);
     PyModule_AddIntMacro(m, Py_C_RECURSION_LIMIT);
 
+    if (PyModule_AddIntMacro(m, Py_single_input)) {
+        return NULL;
+    }
+    if (PyModule_AddIntMacro(m, Py_file_input)) {
+        return NULL;
+    }
+    if (PyModule_AddIntMacro(m, Py_eval_input)) {
+        return NULL;
+    }
+
     testcapistate_t *state = get_testcapi_state(m);
     state->error = PyErr_NewException("_testcapi.error", NULL, NULL);
     PyModule_AddObject(m, "error", state->error);
@@ -3996,6 +4037,9 @@ PyInit__testcapi(void)
         return NULL;
     }
     if (_PyTestCapi_Init_PyAtomic(m) < 0) {
+        return NULL;
+    }
+    if (_PyTestCapi_Init_Run(m) < 0) {
         return NULL;
     }
     if (_PyTestCapi_Init_Hash(m) < 0) {
