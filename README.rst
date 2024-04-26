@@ -1,5 +1,5 @@
-This is Python version 3.12.3
-=============================
+This is Python version 3.12.3 (Scibuild edition, aka it has pipes, aka Pypethon)
+================================================================================
 
 .. image:: https://github.com/python/cpython/workflows/Tests/badge.svg
    :alt: CPython build status on GitHub Actions

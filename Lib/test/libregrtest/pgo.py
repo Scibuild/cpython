@@ -24,6 +24,7 @@ PGO_TESTS = [
     'test_fstring',
     'test_functools',
     'test_generators',
+    'test_grammar',
     'test_hashlib',
     'test_heapq',
     'test_int',

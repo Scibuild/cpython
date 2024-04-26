@@ -40,7 +40,7 @@ EXTENSION_PREFIX = """\
 #ifdef __wasi__
 #  define MAXSTACK 4000
 #else
-#  define MAXSTACK 6000
+#  define MAXSTACK 6500
 #endif
 
 """

@@ -58,21 +58,22 @@ RARROW = 51
 ELLIPSIS = 52
 COLONEQUAL = 53
 EXCLAMATION = 54
-OP = 55
-AWAIT = 56
-ASYNC = 57
-TYPE_IGNORE = 58
-TYPE_COMMENT = 59
-SOFT_KEYWORD = 60
-FSTRING_START = 61
-FSTRING_MIDDLE = 62
-FSTRING_END = 63
-COMMENT = 64
-NL = 65
+PIPE = 55
+OP = 56
+AWAIT = 57
+ASYNC = 58
+TYPE_IGNORE = 59
+TYPE_COMMENT = 60
+SOFT_KEYWORD = 61
+FSTRING_START = 62
+FSTRING_MIDDLE = 63
+FSTRING_END = 64
+COMMENT = 65
+NL = 66
 # These aren't used by the C tokenizer but are needed for tokenize.py
-ERRORTOKEN = 66
-ENCODING = 67
-N_TOKENS = 68
+ERRORTOKEN = 67
+ENCODING = 68
+N_TOKENS = 69
 # Special definitions for cooperation with parser
 NT_OFFSET = 256
 
@@ -128,6 +129,7 @@ EXACT_TOKEN_TYPES = {
     '{': LBRACE,
     '|': VBAR,
     '|=': VBAREQUAL,
+    '|>': PIPE,
     '}': RBRACE,
     '~': TILDE,
 }
