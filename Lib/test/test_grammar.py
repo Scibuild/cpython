@@ -1969,6 +1969,11 @@ class GrammarTests(unittest.TestCase):
         with self.assertRaises(Done):
             foo().send(None)
 
+    def test_pipes(self):
+        self.assertEqual([1,2,3] |> sum(), 6)
+        self.assertEqual([1, 2, 3] |> sum() == 6, True)
+        self.assertEqual(range(5) |> map(str) |> ', '.join(), '0, 1, 2, 3, 4')
+        self.assertRaises(SyntaxError, eval, "1 |> double() + 5")
 
 if __name__ == '__main__':
     unittest.main()
